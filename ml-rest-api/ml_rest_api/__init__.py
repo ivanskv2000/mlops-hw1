@@ -3,9 +3,11 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from flask import request
 from flask_restx import Resource, Api
+from flask_restx import fields
 import itertools
 from werkzeug.exceptions import BadRequest
-#import joblib
+from . import auxiliary as aux
+
 
 models = []
 id_generator = itertools.count(start=1)
@@ -35,6 +37,7 @@ api = Api(
     )
 
 
+
 @api.route('/ml_rest_api')
 class GeneralInfo(Resource):
     def get(self):
@@ -51,18 +54,37 @@ class GetModelClasses(Resource):
         return model_classes
 
 
+wild = fields.Wildcard(fields.Raw)
+train_fields = {
+    'hyperparameters': wild,
+    'X': fields.Raw(
+        description='Records of training data',
+        example=[{"c1": 1, "c2": 2}, {"c1": 3, "c2": 4}]
+        ),
+    'y': fields.Raw(
+        description='Target values',
+        example=[10, 11]
+        )
+}
+train_fields = api.model('Train', train_fields)
+
+
 @api.route('/ml_rest_api/train/<string:model_class>')
 class TrainModel(Resource):
+    @api.expect(train_fields)
+    @api.doc(params={'model_class': 'The class of a model to train'})
     def post(self, model_class):
         if model_class == 'LinearRegression':
-            mc = LinearRegression(**request.json['hyperparameters'])
+            mc = LinearRegression(**request.get_json()['hyperparameters'])
         elif model_class == 'RandomForestClassifier':
-            mc = RandomForestClassifier(**request.json['hyperparameters'])
+            mc = RandomForestClassifier(**request.get_json()['hyperparameters'])
         else:
             raise BadRequest('Unknown model class provided')
 
         print('Fitting model...')
-        fitted_model = mc.fit(request.json['X'], request.json['y'])
+        X = aux.prepare_X(request.get_json()['X'])
+        y = aux.prepare_y(request.get_json()['y'])
+        fitted_model = mc.fit(X, y)
         model_id = next(id_generator)
         models.append({'id': model_id, 'model': fitted_model})
 
@@ -71,20 +93,35 @@ class TrainModel(Resource):
 
 @api.route('/ml_rest_api/saved_models')
 class GetSavedModels(Resource):
-    def parse_models(self, models_list):
-        out = [{'id': m['id'], 'model_class': m['model'].__class__.__name__} for m in models_list]
-
-        return out
-
     def get(self):
-        return {'models': self.parse_models(models)}
+        return {'models': aux.parse_models(models)}
+
+
+predict_fields = {
+    'X': fields.Raw(
+        description='Records of data', 
+        example=[{"c1": 1, "c2": 2}, {"c1": 3, "c2": 4}]
+        )
+}
+predict_fields = api.model('Predict', predict_fields)
 
 
 @api.route('/ml_rest_api/predict/<int:model_id>')
 class PredictWithExisting(Resource):
-    def get(self, model_id):
-        predictors = request.json['X']
-        model = filter(lambda x: x['id'] == model_id, models)
-        prediction = model.predict(predictors)
+    @api.expect(predict_fields)
+    @api.doc(params={'model_id': 'Id of a model used for prediction'})
+    def post(self, model_id):
+        X = aux.prepare_X(request.get_json()['X'])
+        model = list(filter(lambda x: x['id'] == model_id, models))[0]['model']
+        prediction = model.predict(X)
 
-        return prediction
+        return list(prediction)
+
+
+@api.route('/ml_rest_api/delete/<int:model_id>')
+class DeleteModel(Resource):
+    @api.doc(params={'model_id': 'Id of a model used for prediction'})
+    def get(self, model_id):
+        global models
+        models = list(filter(lambda x: x['id'] != model_id, models))
+        return model_id
