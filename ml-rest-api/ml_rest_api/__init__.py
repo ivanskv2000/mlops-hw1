@@ -1,11 +1,10 @@
-#from flask import Flask, jsonify
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from flask import request
 from flask_restx import Resource, Api
 from flask_restx import fields
 import itertools
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NoResultFound
 from . import auxiliary as aux
 
 
@@ -28,24 +27,14 @@ model_classes = {
     ]
 }
 
+
 api = Api(
     title="ML Models Api",
     version="1.0",
-    description="Home Assignment #1 for MlOps course",
+    description="MlOps course: Home Assignment #1 (Rest API)",
     contact="iaskvortsov@edu.hse.ru",
     doc="/ml_rest_api/doc"
     )
-
-
-
-@api.route('/ml_rest_api')
-class GeneralInfo(Resource):
-    def get(self):
-        return {
-            'api': api.title,
-            'version': api.version,
-            'contact': api.contact
-            }
 
 
 @api.route('/ml_rest_api/model_classes')
@@ -88,7 +77,7 @@ class TrainModel(Resource):
         model_id = next(id_generator)
         models.append({'id': model_id, 'model': fitted_model})
 
-        return {'model_class': model_class, 'id': model_id}
+        return {'status': 'trained', 'model_class': model_class, 'id': model_id}
 
 
 @api.route('/ml_rest_api/saved_models')
@@ -106,22 +95,30 @@ predict_fields = {
 predict_fields = api.model('Predict', predict_fields)
 
 
+@api.errorhandler(NoResultFound)
+def handle_no_result_exception(error):
+    '''Return a custom not found error message and 404 status code'''
+    return {'message': error.specific}, 404
+
+
 @api.route('/ml_rest_api/predict/<int:model_id>')
 class PredictWithExisting(Resource):
     @api.expect(predict_fields)
     @api.doc(params={'model_id': 'Id of a model used for prediction'})
     def post(self, model_id):
         X = aux.prepare_X(request.get_json()['X'])
-        model = list(filter(lambda x: x['id'] == model_id, models))[0]['model']
-        prediction = model.predict(X)
-
-        return list(prediction)
+        model = list(filter(lambda x: x['id'] == model_id, models))
+        if len(model) != 0:
+            prediction = model[0]['model'].predict(X)
+            return {'y_pred': list(prediction)}
+        else:
+            raise NoResultFound("Model not found", data={'model_id': model_id})
 
 
 @api.route('/ml_rest_api/delete/<int:model_id>')
 class DeleteModel(Resource):
     @api.doc(params={'model_id': 'Id of a model used for prediction'})
-    def get(self, model_id):
+    def delete(self, model_id):
         global models
         models = list(filter(lambda x: x['id'] != model_id, models))
-        return model_id
+        return {'status': 'deleted', 'model_id': model_id}
