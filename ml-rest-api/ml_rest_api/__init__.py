@@ -4,7 +4,7 @@ from flask import request
 from flask_restx import Resource, Api
 from flask_restx import fields
 import itertools
-from werkzeug.exceptions import BadRequest, NoResultFound
+from werkzeug.exceptions import BadRequest, NotFound
 from . import auxiliary as aux
 
 
@@ -70,7 +70,6 @@ class TrainModel(Resource):
         else:
             raise BadRequest('Unknown model class provided')
 
-        print('Fitting model...')
         X = aux.prepare_X(request.get_json()['X'])
         y = aux.prepare_y(request.get_json()['y'])
         fitted_model = mc.fit(X, y)
@@ -95,10 +94,11 @@ predict_fields = {
 predict_fields = api.model('Predict', predict_fields)
 
 
-@api.errorhandler(NoResultFound)
+
+@api.errorhandler(NotFound)
 def handle_no_result_exception(error):
-    '''Return a custom not found error message and 404 status code'''
-    return {'message': error.specific}, 404
+    '''Return a model not found error message and 404 status code'''
+    return {'message': 'Model not found. Check available models using /ml_rest_api/saved_models'}, 404
 
 
 @api.route('/ml_rest_api/predict/<int:model_id>')
@@ -112,7 +112,8 @@ class PredictWithExisting(Resource):
             prediction = model[0]['model'].predict(X)
             return {'y_pred': list(prediction)}
         else:
-            raise NoResultFound("Model not found", data={'model_id': model_id})
+            e = NotFound('Model not found')
+            raise e
 
 
 @api.route('/ml_rest_api/delete/<int:model_id>')

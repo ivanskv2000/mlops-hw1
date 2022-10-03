@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 from ml_rest_api import api
 
 app = Flask(__name__)
+app.config['ERROR_404_HELP'] = False
 
 
 @app.route('/ml_rest_api')

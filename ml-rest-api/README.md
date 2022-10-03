@@ -27,9 +27,9 @@ POST: обучить модель заново
 - гиперпараметры
 - данные 
 
-GET: удалить обученную модель
+DELETE: удалить обученную модель
 - id модели
-curl http://127.0.0.1:5000/ml_rest_api/delete/1
+curl -X "DELETE" http://127.0.0.1:5000/ml_rest_api/delete/1
 
 
 X - подаем в виде [{'col1': zzz, 'col2': zzz}, {'col1': yyy, 'col2': yyy}, ...]
