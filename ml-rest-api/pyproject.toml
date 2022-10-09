@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ml-rest-api"
-version = "0.1.0"
-description = ""
+version = "1.0"
+description = "MlOps course: Home Assignment #1 (Rest API)"
 authors = ["Ivan Skvortsov <iaskvortsov@edu.hse.ru>"]
 readme = "README.md"
 repository = "https://github.com/ivanskv2000/mlops-hw1"
