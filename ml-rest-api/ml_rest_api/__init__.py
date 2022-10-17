@@ -37,10 +37,10 @@ api = Api(
     )
 
 
-@api.route('/ml_rest_api/model_classes')
-class GetModelClasses(Resource):
-    def get(self):
-        return model_classes
+@api.errorhandler(NotFound)
+def handle_no_result_exception(error):
+    '''Return a model not found error message and 404 status code'''
+    return {'message': 'Model not found. Check available models using /ml_rest_api/saved_models'}, 404
 
 
 wild = fields.Wildcard(fields.Raw)
@@ -57,34 +57,6 @@ train_fields = {
 }
 train_fields = api.model('Train', train_fields)
 
-
-@api.route('/ml_rest_api/train/<string:model_class>')
-class TrainModel(Resource):
-    @api.expect(train_fields)
-    @api.doc(params={'model_class': 'The class of a model to train'})
-    def post(self, model_class):
-        if model_class == 'LinearRegression':
-            mc = LinearRegression(**request.get_json()['hyperparameters'])
-        elif model_class == 'RandomForestClassifier':
-            mc = RandomForestClassifier(**request.get_json()['hyperparameters'])
-        else:
-            raise BadRequest('Unknown model class provided')
-
-        X = aux.prepare_X(request.get_json()['X'])
-        y = aux.prepare_y(request.get_json()['y'])
-        fitted_model = mc.fit(X, y)
-        model_id = next(id_generator)
-        models.append({'id': model_id, 'model': fitted_model})
-
-        return {'status': 'trained', 'model_class': model_class, 'id': model_id}
-
-
-@api.route('/ml_rest_api/saved_models')
-class GetSavedModels(Resource):
-    def get(self):
-        return {'models': aux.parse_models(models)}
-
-
 predict_fields = {
     'X': fields.Raw(
         description='Records of data', 
@@ -94,11 +66,35 @@ predict_fields = {
 predict_fields = api.model('Predict', predict_fields)
 
 
+@api.route('/ml_rest_api/model_classes')
+class GetModelClasses(Resource):
+    def get(self):
+        return model_classes
 
-@api.errorhandler(NotFound)
-def handle_no_result_exception(error):
-    '''Return a model not found error message and 404 status code'''
-    return {'message': 'Model not found. Check available models using /ml_rest_api/saved_models'}, 404
+
+@api.route('/ml_rest_api/train/<string:model_class>')
+class TrainModel(Resource):
+    @api.expect(train_fields)
+    @api.doc(params={'model_class': 'The class of a model to train'})
+    def post(self, model_class):
+        hyperparameters = request.get_json()['hyperparameters']
+        X = aux.prepare_X(request.get_json()['X'])
+        y = aux.prepare_y(request.get_json()['y'])
+        fitted_model = aux.train_model(model_class, X, y, **hyperparameters)
+        model_id = next(id_generator)
+        models.append({'id': model_id, 'model': fitted_model})
+
+        return {
+            'status': 'trained', 
+            'model_class': model_class, 
+            'id': model_id
+            }
+
+
+@api.route('/ml_rest_api/saved_models')
+class GetSavedModels(Resource):
+    def get(self):
+        return {'models': aux.parse_models(models)}
 
 
 @api.route('/ml_rest_api/predict/<int:model_id>')
@@ -107,13 +103,8 @@ class PredictWithExisting(Resource):
     @api.doc(params={'model_id': 'Id of a model used for prediction'})
     def post(self, model_id):
         X = aux.prepare_X(request.get_json()['X'])
-        model = list(filter(lambda x: x['id'] == model_id, models))
-        if len(model) != 0:
-            prediction = model[0]['model'].predict(X)
-            return {'y_pred': list(prediction)}
-        else:
-            e = NotFound('Model not found')
-            raise e
+        prediction = aux.predict_with_model(models, model_id, X)
+        return {'y_pred': list(prediction)}
 
 
 @api.route('/ml_rest_api/delete/<int:model_id>')
