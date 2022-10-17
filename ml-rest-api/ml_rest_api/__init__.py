@@ -85,8 +85,8 @@ class TrainModel(Resource):
         models.append({'id': model_id, 'model': fitted_model})
 
         return {
-            'status': 'trained', 
-            'model_class': model_class, 
+            'status': 'trained',
+            'model_class': model_class,
             'id': model_id
             }
 
@@ -104,7 +104,7 @@ class PredictWithExisting(Resource):
     def post(self, model_id):
         X = aux.prepare_X(request.get_json()['X'])
         prediction = aux.predict_with_model(models, model_id, X)
-        return {'y_pred': list(prediction)}
+        return {'y_pred': prediction}
 
 
 @api.route('/ml_rest_api/delete/<int:model_id>')
@@ -112,5 +112,10 @@ class DeleteModel(Resource):
     @api.doc(params={'model_id': 'Id of a model used for prediction'})
     def delete(self, model_id):
         global models
+        if model_id not in [i['id'] for i in models]:
+            e = NotFound('Model not found')
+            raise e
+
         models = list(filter(lambda x: x['id'] != model_id, models))
         return {'status': 'deleted', 'model_id': model_id}
+
