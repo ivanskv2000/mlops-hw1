@@ -57,6 +57,19 @@ train_fields = {
 }
 train_fields = api.model('Train', train_fields)
 
+wild = fields.Wildcard(fields.Raw)
+re_train_fields = {
+    'X': fields.Raw(
+        description='Records of training data',
+        example=[{"c1": 1, "c2": 2}, {"c1": 3, "c2": 4}]
+        ),
+    'y': fields.Raw(
+        description='Target values',
+        example=[10, 11]
+        )
+}
+re_train_fields = api.model('Re-train', re_train_fields)
+
 predict_fields = {
     'X': fields.Raw(
         description='Records of data',
@@ -92,6 +105,25 @@ class TrainModel(Resource):
         return {
             'status': 'trained',
             'model_class': model_class,
+            'id': model_id
+            }
+
+
+@api.route('/ml_rest_api/retrain/<int:model_id>')
+class ReTrainModel(Resource):
+    @api.expect(re_train_fields)
+    @api.doc(params={'model_id': 'Id of a model used for prediction'})
+    def put(self, model_id):
+        try:
+            X = aux.prepare_X(request.get_json()['X'])
+            y = aux.prepare_y(request.get_json()['y'])
+        except KeyError:
+            raise BadRequest("Insufficient data provided.")
+
+        _ = aux.re_train(models, model_id, X, y)
+
+        return {
+            'status': 're-trained',
             'id': model_id
             }
 

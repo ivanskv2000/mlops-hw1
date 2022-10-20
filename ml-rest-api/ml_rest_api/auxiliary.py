@@ -92,3 +92,13 @@ def predict_with_model(fitted_models, model_id, X):
     else:
         prediction = model[0]['model'].predict(X)
         return list(prediction)
+
+
+@model_errors_handler
+def re_train(fitted_models, model_id, X, y):
+    model = list(filter(lambda x: x['id'] == model_id, fitted_models))
+    if len(model) == 0:
+        e = NotFound('Model not found.')
+        raise e
+    else:
+        return model[0]['model'].fit(X, y)
