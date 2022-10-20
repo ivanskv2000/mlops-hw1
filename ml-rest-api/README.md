@@ -4,8 +4,27 @@ A simple restful API which is able to train sklearn models and get their predict
 
 ## Usage
 
-poetry run python3 app.py
+### Step 1. Set Up the Working Environment
 
+> :warning: I used Poetry to manage package dependencies and other configurations. If you don't have Poetry on your machine, refer to their [documentation](https://python-poetry.org/docs/).
+
+Initialise the project in Poetry
+```bash
+cd path_to_project/
+poetry init
+```
+
+Install required dependencies
+```bash
+poetry install
+```
+
+Run server
+```bash
+poetry run python3 app.py
+```
+
+All done! Now you can visit API's main page on [127.0.0.1:5000/ml_rest_api](http://127.0.0.1:5000/ml_rest_api).
 
 ## Methods
 This API has a decent Swagger documentation available on `/ml_rest_api/doc`. 
