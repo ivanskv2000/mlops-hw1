@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
 
 model_classes = {
-    'classes': [
+    "classes": [
         {
             "name": "LinearRegression",
             "predictors": ["numeric"],
