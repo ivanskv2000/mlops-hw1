@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import functools
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
@@ -56,18 +57,20 @@ def prepare_y(y):
     return df
 
 
-def training_errors_handler(func):
-    def inner_function(*args, **kwargs):
+def model_errors_handler(func):
+    def wrapper(*args, **kwargs):
         try:
-            func(*args, **kwargs)
+            out = func(*args, **kwargs)
+            return out
         except ValueError:
             raise UnprocessableEntity('Wrong data type provided.')
         except TypeError:
             raise BadRequest('Unknown hyperparameter.')
-    return inner_function
+
+    return wrapper
 
 
-@training_errors_handler
+@model_errors_handler
 def train_model(model_class, X, y, **kwargs):
     if model_class == 'LinearRegression':
         mc = LinearRegression(**kwargs)
@@ -80,6 +83,7 @@ def train_model(model_class, X, y, **kwargs):
     return mc.fit(X, y)
 
 
+@model_errors_handler
 def predict_with_model(fitted_models, model_id, X):
     model = list(filter(lambda x: x['id'] == model_id, fitted_models))
     if len(model) == 0:
