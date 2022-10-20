@@ -18,9 +18,11 @@ def home():
         doc_url=base_url + "/doc",
     )
 
+
 @app.errorhandler(HTTPException)
 def handle_http_exception(e):
     return {"message": e.description}, e.code
+
 
 api.init_app(app)
 app.run(debug=True)

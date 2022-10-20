@@ -23,10 +23,10 @@ api = Api(
 
 @api.errorhandler(Exception)
 def handle_unexpected_error(error):
-    '''Handle an unexpected error'''
+    """Handle an unexpected error"""
     return {
         "message": "Something went wrong. Please try to find a bug in the code :)",
-        'error': str(error)
+        "error": str(error),
     }, 500
 
 
