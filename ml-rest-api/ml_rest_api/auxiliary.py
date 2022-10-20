@@ -1,9 +1,8 @@
-import numpy as np
 import pandas as pd
-import functools
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
+
 
 model_classes = {
     'classes': [

@@ -1,5 +1,3 @@
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestClassifier
 from flask import request
 from flask_restx import Resource, Api
 from flask_restx import fields
