@@ -10,22 +10,7 @@ from . import auxiliary as aux
 
 models = []
 id_generator = itertools.count(start=1)
-model_classes = {
-    'classes': [
-        {
-            'name': 'LinearRegression',
-            'predictors': ['numeric'],
-            'target': ['numeric'],
-            # 'hyperparameters': ['fit_intercept']
-        },
-        {
-            'name': 'RandomForestClassifier',
-            'predictors': ['numeric', 'categorical'],
-            'target': ['categorical'],
-            # 'hyperparameters': ['n_estimators', 'criterion', 'max_depth']
-        }
-    ]
-}
+model_classes = aux.model_classes
 
 
 api = Api(
@@ -41,6 +26,19 @@ api = Api(
 def handle_no_result_exception(error):
     '''Return a model not found error message and 404 status code'''
     return {'message': 'Model not found. Check available models using /ml_rest_api/saved_models'}, 404
+
+
+model_resp = {
+    200: 'Success',
+    400: 'Bad Request',
+    404: 'Not Found',
+    422: 'Unprocessable Entity',
+}
+
+simple_resp = {
+    200: 'Success',
+    404: 'Not Found',
+}
 
 
 wild = fields.Wildcard(fields.Raw)
@@ -82,14 +80,20 @@ predict_fields = api.model('Predict', predict_fields)
 @api.route('/ml_rest_api/model_classes')
 class GetModelClasses(Resource):
     def get(self):
+        '''
+        Получить список доступных для обучения классов моделей
+        '''
         return model_classes
 
 
 @api.route('/ml_rest_api/train/<string:model_class>')
 class TrainModel(Resource):
     @api.expect(train_fields)
-    @api.doc(params={'model_class': 'The class of a model to train'})
+    @api.doc(params={'model_class': 'The class of a model to train'}, responses=model_resp)
     def post(self, model_class):
+        '''
+        Обучить ML-модель и сохранить ее в памяти
+        '''
         hyperparameters = request.get_json().get('hyperparameters', {})
         try:
             X = aux.prepare_X(request.get_json()['X'])
@@ -112,8 +116,11 @@ class TrainModel(Resource):
 @api.route('/ml_rest_api/retrain/<int:model_id>')
 class ReTrainModel(Resource):
     @api.expect(re_train_fields)
-    @api.doc(params={'model_id': 'Id of a model used for prediction'})
+    @api.doc(params={'model_id': 'Id of a model used for prediction'}, responses=model_resp)
     def put(self, model_id):
+        '''
+        Обучить сохраненную модель заново
+        '''
         try:
             X = aux.prepare_X(request.get_json()['X'])
             y = aux.prepare_y(request.get_json()['y'])
@@ -131,14 +138,20 @@ class ReTrainModel(Resource):
 @api.route('/ml_rest_api/saved_models')
 class GetSavedModels(Resource):
     def get(self):
+        '''
+        Вывести список имеющихся в памяти моделей
+        '''
         return {'models': aux.parse_models(models)}
 
 
 @api.route('/ml_rest_api/predict/<int:model_id>')
 class PredictWithExisting(Resource):
     @api.expect(predict_fields)
-    @api.doc(params={'model_id': 'Id of a model used for prediction'})
+    @api.doc(params={'model_id': 'Id of a model used for prediction'}, responses=model_resp)
     def post(self, model_id):
+        '''
+        Получить предсказание выбранной модели
+        '''
         try:
             X = aux.prepare_X(request.get_json()['X'])
         except KeyError:
@@ -149,8 +162,11 @@ class PredictWithExisting(Resource):
 
 @api.route('/ml_rest_api/delete/<int:model_id>')
 class DeleteModel(Resource):
-    @api.doc(params={'model_id': 'Id of a model used for prediction'})
+    @api.doc(params={'model_id': 'Id of a model used for prediction'}, responses=simple_resp)
     def delete(self, model_id):
+        '''
+        Удалить обученную модель из памяти
+        '''
         global models
         if model_id not in [i['id'] for i in models]:
             e = NotFound('Model not found')
