@@ -59,7 +59,7 @@ train_fields = api.model('Train', train_fields)
 
 predict_fields = {
     'X': fields.Raw(
-        description='Records of data', 
+        description='Records of data',
         example=[{"c1": 1, "c2": 2}, {"c1": 3, "c2": 4}]
         )
 }
@@ -77,10 +77,15 @@ class TrainModel(Resource):
     @api.expect(train_fields)
     @api.doc(params={'model_class': 'The class of a model to train'})
     def post(self, model_class):
-        hyperparameters = request.get_json()['hyperparameters']
-        X = aux.prepare_X(request.get_json()['X'])
-        y = aux.prepare_y(request.get_json()['y'])
+        hyperparameters = request.get_json().get('hyperparameters', {})
+        try:
+            X = aux.prepare_X(request.get_json()['X'])
+            y = aux.prepare_y(request.get_json()['y'])
+        except KeyError:
+            raise BadRequest("Insufficient data provided.")
+
         fitted_model = aux.train_model(model_class, X, y, **hyperparameters)
+
         model_id = next(id_generator)
         models.append({'id': model_id, 'model': fitted_model})
 
@@ -102,7 +107,10 @@ class PredictWithExisting(Resource):
     @api.expect(predict_fields)
     @api.doc(params={'model_id': 'Id of a model used for prediction'})
     def post(self, model_id):
-        X = aux.prepare_X(request.get_json()['X'])
+        try:
+            X = aux.prepare_X(request.get_json()['X'])
+        except KeyError:
+            raise BadRequest("Insufficient data provided.")
         prediction = aux.predict_with_model(models, model_id, X)
         return {'y_pred': prediction}
 
@@ -118,4 +126,3 @@ class DeleteModel(Resource):
 
         models = list(filter(lambda x: x['id'] != model_id, models))
         return {'status': 'deleted', 'model_id': model_id}
-
