@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from ml_rest_api import api
+from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
 app.config["ERROR_404_HELP"] = False
@@ -17,6 +18,9 @@ def home():
         doc_url=base_url + "/doc",
     )
 
+@app.errorhandler(HTTPException)
+def handle_http_exception(e):
+    return {"message": e.description}, e.code
 
 api.init_app(app)
 app.run(debug=True)

@@ -1,3 +1,4 @@
+from lib2to3.pytree import Base
 from flask import request
 from flask_restx import Resource, Api
 from flask_restx import fields
@@ -18,6 +19,15 @@ api = Api(
     contact="iaskvortsov@edu.hse.ru",
     doc="/ml_rest_api/doc",
 )
+
+
+@api.errorhandler(Exception)
+def handle_unexpected_error(error):
+    '''Handle an unexpected error'''
+    return {
+        "message": "Something went wrong. Please try to find a bug in the code :)",
+        'error': str(error)
+    }, 500
 
 
 @api.errorhandler(NotFound)
