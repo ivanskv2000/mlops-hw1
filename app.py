@@ -4,6 +4,7 @@ from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
 app.config["ERROR_404_HELP"] = False
+app.config['PROPAGATE_EXCEPTIONS'] = False
 
 
 @app.route("/ml_rest_api")
@@ -20,8 +21,8 @@ def home():
 
 
 @app.errorhandler(HTTPException)
-def handle_http_exception(e):
-    return {"message": e.description}, e.code
+def handle_http_exception(error):
+    return {"message": error.description}, error.code
 
 
 api.init_app(app)
