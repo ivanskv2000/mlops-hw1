@@ -3,7 +3,7 @@ from flask import request
 from flask_restx import Resource, Api
 from flask_restx import fields
 import itertools
-from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
+from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity, InternalServerError
 from . import auxiliary as aux
 
 
@@ -27,15 +27,6 @@ def handle_no_result_exception(error):
     return {
         "message": "Model not found. Check available models using /ml_rest_api/saved_models"
     }, 404
-
-
-# @api.errorhandler(Exception)
-# def handle_unexpected_error(error):
-#     """Handle an unexpected error (general handler)"""
-#     return {
-#         "message": "Something went wrong. Please try to find a bug in the code :)",
-#         "error": str(error),
-#     }, 500
 
 
 model_resp = {

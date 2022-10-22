@@ -26,6 +26,19 @@ poetry run python3 app.py
 
 All done! Now you can visit API's main page on [127.0.0.1:5000/ml_rest_api](http://127.0.0.1:5000/ml_rest_api).
 
+## Data Format
+In cases when you should pass the data (X and/or y, depending on the method), you should follow the **records** format. For `X` (predictor) data, it is an array of observations with each observation presented as a dictionary:
+
+```
+[{"col1":<val>, "col2":<val>, "col3":<val>, ...}, {"col1":<val>, "col2": <val>, "col3":<val>, ...}, ...]
+```
+
+For `y` (target) data it is just a flat array:
+
+```
+[<val>, <val>, ...]
+```
+
 ## Methods
 This API has a decent Swagger documentation available on [`/ml_rest_api/doc`](http://127.0.0.1:5000/ml_rest_api/doc). 
 
