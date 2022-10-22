@@ -22,9 +22,10 @@ model_classes = {
 
 
 def parse_models(models_list):
-    '''
+    """
     Return the saved models list in an appropriate format
-    '''
+    """
+
     def filter_hp(hp: dict):
         allowed_hp = [i["hyperparameters"] for i in model_classes["classes"]]
         allowed_hp = sum(allowed_hp, [])
@@ -42,9 +43,9 @@ def parse_models(models_list):
 
 
 def prepare_X(X):
-    '''
+    """
     Convert json data to a Pandas dataframe
-    '''
+    """
     try:
         df = pd.DataFrame.from_records(X).values
     except TypeError:
@@ -54,9 +55,9 @@ def prepare_X(X):
 
 
 def prepare_y(y):
-    '''
+    """
     Convert json array to a Pandas dataframe
-    '''
+    """
     try:
         df = pd.Series(y).values
     except TypeError:
@@ -66,10 +67,11 @@ def prepare_y(y):
 
 
 def model_errors_handler(func):
-    '''
-    A decorator used for handling exceptions 
+    """
+    A decorator used for handling exceptions
     which may occur during model training or prediction
-    '''
+    """
+
     def wrapper(*args, **kwargs):
         try:
             out = func(*args, **kwargs)
@@ -84,9 +86,9 @@ def model_errors_handler(func):
 
 @model_errors_handler
 def train_model(model_class, X, y, **kwargs):
-    '''
+    """
     Train a model
-    '''
+    """
     if model_class == "LinearRegression":
         mc = LinearRegression(**kwargs)
     elif model_class == "RandomForestClassifier":
@@ -100,9 +102,9 @@ def train_model(model_class, X, y, **kwargs):
 
 @model_errors_handler
 def predict_with_model(fitted_models, model_id, X):
-    '''
+    """
     Return predictions
-    '''
+    """
     model = list(filter(lambda x: x["id"] == model_id, fitted_models))
     if len(model) == 0:
         e = NotFound("Model not found.")
@@ -115,9 +117,9 @@ def predict_with_model(fitted_models, model_id, X):
 
 @model_errors_handler
 def re_train(fitted_models, model_id, X, y):
-    '''
+    """
     Re-train an existing model
-    '''
+    """
     model = list(filter(lambda x: x["id"] == model_id, fitted_models))
     if len(model) == 0:
         e = NotFound("Model not found.")

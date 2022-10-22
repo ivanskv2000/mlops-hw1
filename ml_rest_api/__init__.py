@@ -3,7 +3,10 @@ from flask import request
 from flask_restx import Resource, Api
 from flask_restx import fields
 import itertools
-from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity, InternalServerError
+from werkzeug.exceptions import (
+    BadRequest,
+    NotFound
+)
 from . import auxiliary as aux
 
 
