@@ -112,7 +112,7 @@ def predict_with_model(fitted_models, model_id, X):
     else:
         prediction = model[0]["model"].predict(X)
 
-        if model[0]["model"].__class__.__name__ == 'RandomForestClassifier':
+        if model[0]["model"].__class__.__name__ == "RandomForestClassifier":
             prediction = prediction.astype(str)
 
         return list(prediction)
