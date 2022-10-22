@@ -46,7 +46,7 @@ ___
 ### POST: train a model
 
 **Parameters:**
-- `model_class` &mdash; class of a model to train
+- `model_class` &mdash; class of a model to train (`LinearRegression` or `RandomForestClassifier`)
 
 **Payload:**
 - `hyperparameters`

@@ -1,4 +1,3 @@
-from lib2to3.pytree import Base
 from flask import request
 from flask_restx import Resource, Api
 from flask_restx import fields
