@@ -3,12 +3,13 @@ from flask_restx import Resource, Api
 from flask_restx import fields
 import itertools
 from werkzeug.exceptions import BadRequest, NotFound
-from . import auxiliary as aux
+from . import data_helpers
+from . import model_helpers
 
 
 models = []
 id_generator = itertools.count(start=1)
-model_classes = aux.model_classes
+model_classes = model_helpers.model_classes
 
 
 api = Api(
@@ -45,8 +46,8 @@ wild = fields.Wildcard(fields.Raw)
 train_fields = {
     "hyperparameters": wild,
     "X": fields.Raw(
-        description="Records of training data",
-        example=[{"c1": 1, "c2": 2}, {"c1": 3, "c2": 4}],
+        description="Training data",
+        example={"columns": ["one", "two", "three"], "data": [[1, 2, 3], [4, 5, 6], [7, 8, 9]]},
     ),
     "y": fields.Raw(description="Target values", example=[10, 11]),
 }
@@ -91,12 +92,12 @@ class TrainModel(Resource):
         """
         hyperparameters = request.get_json().get("hyperparameters", {})
         try:
-            X = aux.prepare_X(request.get_json()["X"])
-            y = aux.prepare_y(request.get_json()["y"])
+            X = data_helpers.prepare_X(request.get_json()["X"])
+            y = data_helpers.prepare_y(request.get_json()["y"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
 
-        fitted_model = aux.train_model(model_class, X, y, **hyperparameters)
+        fitted_model = model_helpers.train_model(model_class, X, y, **hyperparameters)
 
         model_id = next(id_generator)
         models.append({"id": model_id, "model": fitted_model})
@@ -115,12 +116,12 @@ class ReTrainModel(Resource):
         Обучить сохраненную модель заново
         """
         try:
-            X = aux.prepare_X(request.get_json()["X"])
-            y = aux.prepare_y(request.get_json()["y"])
+            X = data_helpers.prepare_X(request.get_json()["X"])
+            y = data_helpers.prepare_y(request.get_json()["y"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
 
-        _ = aux.re_train(models, model_id, X, y)
+        _ = model_helpers.re_train(models, model_id, X, y)
 
         return {"status": "re-trained", "id": model_id}
 
@@ -131,7 +132,7 @@ class GetSavedModels(Resource):
         """
         Вывести список имеющихся в памяти моделей
         """
-        return {"models": aux.parse_models(models)}
+        return {"models": model_helpers.parse_models(models)}
 
 
 @api.route("/ml_rest_api/predict/<int:model_id>")
@@ -145,10 +146,10 @@ class PredictWithExisting(Resource):
         Получить предсказание выбранной модели
         """
         try:
-            X = aux.prepare_X(request.get_json()["X"])
+            X = data_helpers.prepare_X(request.get_json()["X"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
-        prediction = aux.predict_with_model(models, model_id, X)
+        prediction = model_helpers.predict_with_model(models, model_id, X)
         return {"y_pred": prediction}
 
 

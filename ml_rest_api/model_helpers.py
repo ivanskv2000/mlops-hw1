@@ -1,4 +1,3 @@
-import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
@@ -40,30 +39,6 @@ def parse_models(models_list):
         for m in models_list
     ]
     return out
-
-
-def prepare_X(X):
-    """
-    Convert json data to a Pandas dataframe
-    """
-    try:
-        df = pd.DataFrame(X["data"], columns=X["columns"])
-    except (TypeError, ValueError) as _:
-        raise UnprocessableEntity("Wrong data format provided.")
-
-    return df
-
-
-def prepare_y(y):
-    """
-    Convert json array to a Pandas dataframe
-    """
-    try:
-        df = pd.Series(y).values
-    except TypeError:
-        raise UnprocessableEntity("Wrong data format provided.")
-
-    return df
 
 
 def model_errors_handler(func):
