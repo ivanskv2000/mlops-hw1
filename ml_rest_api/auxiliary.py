@@ -47,8 +47,8 @@ def prepare_X(X):
     Convert json data to a Pandas dataframe
     """
     try:
-        df = pd.DataFrame.from_records(X).values
-    except TypeError:
+        df = pd.DataFrame(X['data'], columns=X['columns'])
+    except (TypeError, ValueError) as _:
         raise UnprocessableEntity("Wrong data format provided.")
 
     return df

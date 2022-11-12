@@ -27,10 +27,10 @@ poetry run python3 app.py
 All done! Now you can visit API's main page on [127.0.0.1:5000/ml_rest_api](http://127.0.0.1:5000/ml_rest_api).
 
 ## Data Format
-In cases when you should pass the data (X and/or y, depending on the method), you should follow the **records** format. For `X` (predictor) data, it is an array of observations with each observation presented as a dictionary:
+In cases when you pass the data (X and/or y, depending on the method), you should follow the specific format. For `X` (predictor) data, it is necessary to specify column names and the data itselt as a 2-D array:
 
 ```
-[{"col1":<val>, "col2":<val>, "col3":<val>, ...}, {"col1":<val>, "col2": <val>, "col3":<val>, ...}, ...]
+{"columns": ["col1","col2"], "data": [[<val1>, <val2>],[<val3>, <val4>],[<val5>, <val6>], ...]}
 ```
 
 For `y` (target) data it is just a flat array:
@@ -54,7 +54,7 @@ ___
 
 **Example:**
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"hyperparameters": {}, "X": [{"c1":1, "c2":3}, {"c1":0, "c2":13}, {"c1":-3, "c2":3.5}], "y": [1,2,3]}' http://127.0.0.1:5000/ml_rest_api/train/LinearRegression
+curl -X POST -H "Content-Type: application/json" -d '{"hyperparameters": {}, "X": {"columns": ["c1","c2"], "data": [[1,3.0],[0,13.0],[-3,3.5]]}, "y": [1,2,3]}' http://127.0.0.1:5000/ml_rest_api/train/LinearRegression
 ```
 
 ___
@@ -84,7 +84,7 @@ ___
 
 **Example:**
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"X": [{"c1":1, "c2":3}, {"c1":0, "c2":13}, {"c1":-3, "c2":3.5}]}' http://127.0.0.1:5000/ml_rest_api/predict/1
+curl -X POST -H "Content-Type: application/json" -d '{"X": {"columns": ["c1","c2"], "data": [[1,3.0],[0,13.0],[-3,3.5]]}}' http://127.0.0.1:5000/ml_rest_api/predict/1
 ```
 
 ___
@@ -98,7 +98,7 @@ ___
 
 **Example:**
 ```bash
-curl -X PUT -H "Content-Type: application/json" http://127.0.0.1:5000/ml_rest_api/retrain/1 -d '{"X": [{"c1":345, "c2":3222}, {"c1":134, "c2":1003}, {"c1":215, "c2":999}], "y": [10000,23335,34556]}'
+curl -X PUT -H "Content-Type: application/json" http://127.0.0.1:5000/ml_rest_api/retrain/1 -d '{"X": {"columns": ["c1","c2"], "data": [[345,3222],[134,1003],[215,999]]}, "y": [10000,23335,34556]}'
 ```
 
 ___
