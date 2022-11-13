@@ -1,5 +1,5 @@
 from flask import request
-from flask_restx import Namespace, Resource, Api
+from flask_restx import Namespace, Resource
 from flask_restx import fields
 import itertools
 from werkzeug.exceptions import BadRequest, NotFound
@@ -7,12 +7,11 @@ from . import data_helpers
 from . import model_helpers
 
 
-models = []
+models_metadata = []
 id_generator = itertools.count(start=1)
 model_classes = model_helpers.model_classes
 
-
-api = Namespace('ml_rest_api')
+api = Namespace("ml_rest_api")
 
 
 @api.errorhandler(NotFound)
@@ -97,7 +96,7 @@ class TrainModel(Resource):
         fitted_model = model_helpers.train_model(model_class, X, y, **hyperparameters)
 
         model_id = next(id_generator)
-        models.append({"id": model_id, "model": fitted_model})
+        models_metadata.append({"id": model_id, "model": fitted_model})
 
         return {"status": "trained", "model_class": model_class, "id": model_id}
 
@@ -118,7 +117,7 @@ class ReTrainModel(Resource):
         except KeyError:
             raise BadRequest("Insufficient data provided.")
 
-        _ = model_helpers.re_train(models, model_id, X, y)
+        _ = model_helpers.re_train(models_metadata, model_id, X, y)
 
         return {"status": "re-trained", "id": model_id}
 
@@ -129,7 +128,7 @@ class GetSavedModels(Resource):
         """
         Вывести список имеющихся в памяти моделей
         """
-        return {"models": model_helpers.parse_models(models)}
+        return {"models": model_helpers.parse_models(models_metadata)}
 
 
 @api.route("/predict/<int:model_id>")
@@ -146,7 +145,7 @@ class PredictWithExisting(Resource):
             X = data_helpers.prepare_X(request.get_json()["X"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
-        prediction = model_helpers.predict_with_model(models, model_id, X)
+        prediction = model_helpers.predict_with_model(models_metadata, model_id, X)
         return {"y_pred": prediction}
 
 
@@ -159,10 +158,10 @@ class DeleteModel(Resource):
         """
         Удалить обученную модель из памяти
         """
-        global models
-        if model_id not in [i["id"] for i in models]:
+        global models_metadata
+        if model_id not in [i["id"] for i in models_metadata]:
             e = NotFound("Model not found")
             raise e
 
-        models = list(filter(lambda x: x["id"] != model_id, models))
+        models_metadata = list(filter(lambda x: x["id"] != model_id, models_metadata))
         return {"status": "deleted", "model_id": model_id}

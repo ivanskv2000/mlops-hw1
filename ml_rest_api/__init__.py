@@ -1,5 +1,4 @@
 from flask_restx import Api
-
 from .controller import api as ns
 
 api = Api(
