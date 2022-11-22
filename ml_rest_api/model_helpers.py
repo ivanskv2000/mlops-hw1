@@ -1,6 +1,9 @@
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
+import os
+import json
+import joblib
 
 model_classes = {
     "classes": [
@@ -20,7 +23,7 @@ model_classes = {
 }
 
 
-def parse_models(models_list):
+def get_model_metadata(id, m):
     """
     Return the saved models list in an appropriate format
     """
@@ -30,15 +33,28 @@ def parse_models(models_list):
         allowed_hp = sum(allowed_hp, [])
         return {k: v for k, v in hp.items() if k in allowed_hp}
 
-    out = [
-        {
-            "id": m["id"],
-            "model_class": m["model"].__class__.__name__,
-            "hyperparameters": filter_hp(m["model"].get_params()),
-        }
-        for m in models_list
-    ]
+    out = {
+        "id": id,
+        "model_class": m.__class__.__name__,
+        "hyperparameters": filter_hp(m.get_params()),
+    }
+
     return out
+
+
+def parse_models(path_to_models):
+    metadata_files = [
+        os.path.join(path_to_models, file)
+        for file in os.listdir(path_to_models)
+        if file.endswith(".json")
+    ]
+    metadata_out = []
+    for metadata_file in metadata_files:
+        with open(metadata_file, "r") as cf:
+            md = json.load(cf)
+            metadata_out.append(md)
+
+    return metadata_out
 
 
 def model_errors_handler(func):
@@ -76,31 +92,69 @@ def train_model(model_class, X, y, **kwargs):
 
 
 @model_errors_handler
-def predict_with_model(fitted_models, model_id, X):
+def predict_with_model(model_id, path_to_models, X):
     """
     Return predictions
     """
-    model = list(filter(lambda x: x["id"] == model_id, fitted_models))
+    model = [
+        os.path.join(path_to_models, file)
+        for file in os.listdir(path_to_models)
+        if file == f"{model_id}.joblib"
+    ]
     if len(model) == 0:
         e = NotFound("Model not found.")
         raise e
     else:
-        prediction = model[0]["model"].predict(X)
+        model = joblib.load(model[0])
+        prediction = model.predict(X)
 
-        if model[0]["model"].__class__.__name__ == "RandomForestClassifier":
+        if model.__class__.__name__ == "RandomForestClassifier":
             prediction = prediction.astype(str)
 
         return list(prediction)
 
 
 @model_errors_handler
-def re_train(fitted_models, model_id, X, y):
+def re_train(model_id, path_to_models, X, y):
     """
     Re-train an existing model
     """
-    model = list(filter(lambda x: x["id"] == model_id, fitted_models))
+    model = [
+        os.path.join(path_to_models, file)
+        for file in os.listdir(path_to_models)
+        if file == f"{model_id}.joblib"
+    ]
+
     if len(model) == 0:
         e = NotFound("Model not found.")
         raise e
     else:
-        return model[0]["model"].fit(X, y)
+        model = joblib.load(model[0])
+        return model.fit(X, y)
+
+
+def save_model(model_id, fitted_model, path_to_models):
+    model_metadata = get_model_metadata(model_id, fitted_model)
+
+    model_pickle_path = os.path.join(path_to_models, f"{model_id}.joblib")
+    model_metadata_path = os.path.join(path_to_models, f"{model_id}.json")
+
+    joblib.dump(fitted_model, model_pickle_path)
+
+    with open(model_metadata_path, "w") as outfile:
+        json.dump(model_metadata, outfile, indent=4)
+
+
+def delete_model(model_id, path_to_models):
+    model = [
+        os.path.join(path_to_models, file)
+        for file in os.listdir(path_to_models)
+        if file == f"{model_id}.joblib"
+    ]
+
+    if len(model) == 0:
+        e = NotFound("Model not found.")
+        raise e
+    else:
+        os.remove(model[0])
+        os.remove(os.path.join(path_to_models, f"{model_id}.json"))

@@ -5,10 +5,24 @@ import itertools
 from werkzeug.exceptions import BadRequest, NotFound
 from . import data_helpers
 from . import model_helpers
+import os
 
 
 models_metadata = []
-id_generator = itertools.count(start=1)
+
+proj_path = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
+models_path = os.path.join(proj_path, "models")
+
+ids = [
+    1,
+]
+for file in os.listdir(models_path):
+    if file.endswith(".txt"):
+        id_curr = int(file.split(".")[0])
+        ids.append(id_curr)
+max_id = max(ids)
+
+id_generator = itertools.count(start=max_id)
 model_classes = model_helpers.model_classes
 
 api = Namespace("ml_rest_api")
@@ -53,15 +67,16 @@ wild = fields.Wildcard(fields.Raw)
 re_train_fields = {
     "X": fields.Raw(
         description="Records of training data",
-        example=[{"c1": 1, "c2": 2}, {"c1": 3, "c2": 4}],
+        example={"columns": ["c1", "c2"], "data": [[1, 3.0], [0, 13.0], [-3, 3.5]]},
     ),
-    "y": fields.Raw(description="Target values", example=[10, 11]),
+    "y": fields.Raw(description="Target values", example=[1, 2, 3]),
 }
 re_train_fields = api.model("Re-train", re_train_fields)
 
 predict_fields = {
     "X": fields.Raw(
-        description="Records of data", example=[{"c1": 1, "c2": 2}, {"c1": 3, "c2": 4}]
+        description="Records of data",
+        example={"columns": ["c1", "c2"], "data": [[1, 2], [3, 4]]},
     )
 }
 predict_fields = api.model("Predict", predict_fields)
@@ -96,8 +111,8 @@ class TrainModel(Resource):
         fitted_model = model_helpers.train_model(model_class, X, y, **hyperparameters)
 
         model_id = next(id_generator)
-        models_metadata.append({"id": model_id, "model": fitted_model})
 
+        model_helpers.save_model(model_id, fitted_model, models_path)
         return {"status": "trained", "model_class": model_class, "id": model_id}
 
 
@@ -111,13 +126,15 @@ class ReTrainModel(Resource):
         """
         Обучить сохраненную модель заново
         """
+
         try:
             X = data_helpers.prepare_X(request.get_json()["X"])
             y = data_helpers.prepare_y(request.get_json()["y"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
 
-        _ = model_helpers.re_train(models_metadata, model_id, X, y)
+        new_model = model_helpers.re_train(model_id, models_path, X, y)
+        model_helpers.save_model(model_id, new_model, models_path)
 
         return {"status": "re-trained", "id": model_id}
 
@@ -128,7 +145,7 @@ class GetSavedModels(Resource):
         """
         Вывести список имеющихся в памяти моделей
         """
-        return {"models": model_helpers.parse_models(models_metadata)}
+        return {"models": model_helpers.parse_models(models_path)}
 
 
 @api.route("/predict/<int:model_id>")
@@ -145,7 +162,7 @@ class PredictWithExisting(Resource):
             X = data_helpers.prepare_X(request.get_json()["X"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
-        prediction = model_helpers.predict_with_model(models_metadata, model_id, X)
+        prediction = model_helpers.predict_with_model(model_id, models_path, X)
         return {"y_pred": prediction}
 
 
@@ -158,10 +175,5 @@ class DeleteModel(Resource):
         """
         Удалить обученную модель из памяти
         """
-        global models_metadata
-        if model_id not in [i["id"] for i in models_metadata]:
-            e = NotFound("Model not found")
-            raise e
-
-        models_metadata = list(filter(lambda x: x["id"] != model_id, models_metadata))
+        model_helpers.delete_model(model_id, models_path)
         return {"status": "deleted", "model_id": model_id}
