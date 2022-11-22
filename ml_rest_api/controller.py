@@ -13,10 +13,12 @@ models_metadata = []
 proj_path = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
 models_path = os.path.join(proj_path, "models")
 
-ids = [1, ]
+ids = [
+    1,
+]
 for file in os.listdir(models_path):
-    if file.endswith('.txt'):
-        id_curr = int(file.split('.')[0])
+    if file.endswith(".txt"):
+        id_curr = int(file.split(".")[0])
         ids.append(id_curr)
 max_id = max(ids)
 
@@ -65,7 +67,7 @@ wild = fields.Wildcard(fields.Raw)
 re_train_fields = {
     "X": fields.Raw(
         description="Records of training data",
-        example={"columns": ["c1","c2"], "data": [[1,3.0], [0,13.0], [-3,3.5]]},
+        example={"columns": ["c1", "c2"], "data": [[1, 3.0], [0, 13.0], [-3, 3.5]]},
     ),
     "y": fields.Raw(description="Target values", example=[1, 2, 3]),
 }
@@ -73,7 +75,8 @@ re_train_fields = api.model("Re-train", re_train_fields)
 
 predict_fields = {
     "X": fields.Raw(
-        description="Records of data", example={"columns": ["c1", "c2"], "data": [[1,2], [3,4]]}
+        description="Records of data",
+        example={"columns": ["c1", "c2"], "data": [[1, 2], [3, 4]]},
     )
 }
 predict_fields = api.model("Predict", predict_fields)

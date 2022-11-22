@@ -37,16 +37,20 @@ def get_model_metadata(id, m):
         "id": id,
         "model_class": m.__class__.__name__,
         "hyperparameters": filter_hp(m.get_params()),
-        }
+    }
 
     return out
 
 
 def parse_models(path_to_models):
-    metadata_files = [os.path.join(path_to_models, file) for file in os.listdir(path_to_models) if file.endswith(".json")]
+    metadata_files = [
+        os.path.join(path_to_models, file)
+        for file in os.listdir(path_to_models)
+        if file.endswith(".json")
+    ]
     metadata_out = []
     for metadata_file in metadata_files:
-        with open(metadata_file, 'r') as cf:
+        with open(metadata_file, "r") as cf:
             md = json.load(cf)
             metadata_out.append(md)
 
@@ -92,7 +96,11 @@ def predict_with_model(model_id, path_to_models, X):
     """
     Return predictions
     """
-    model = [os.path.join(path_to_models, file) for file in os.listdir(path_to_models) if file == f"{model_id}.joblib"]
+    model = [
+        os.path.join(path_to_models, file)
+        for file in os.listdir(path_to_models)
+        if file == f"{model_id}.joblib"
+    ]
     if len(model) == 0:
         e = NotFound("Model not found.")
         raise e
@@ -111,7 +119,11 @@ def re_train(model_id, path_to_models, X, y):
     """
     Re-train an existing model
     """
-    model = [os.path.join(path_to_models, file) for file in os.listdir(path_to_models) if file == f"{model_id}.joblib"]
+    model = [
+        os.path.join(path_to_models, file)
+        for file in os.listdir(path_to_models)
+        if file == f"{model_id}.joblib"
+    ]
 
     if len(model) == 0:
         e = NotFound("Model not found.")
@@ -129,12 +141,16 @@ def save_model(model_id, fitted_model, path_to_models):
 
     joblib.dump(fitted_model, model_pickle_path)
 
-    with open(model_metadata_path, 'w') as outfile:
+    with open(model_metadata_path, "w") as outfile:
         json.dump(model_metadata, outfile, indent=4)
 
 
 def delete_model(model_id, path_to_models):
-    model = [os.path.join(path_to_models, file) for file in os.listdir(path_to_models) if file == f"{model_id}.joblib"]
+    model = [
+        os.path.join(path_to_models, file)
+        for file in os.listdir(path_to_models)
+        if file == f"{model_id}.joblib"
+    ]
 
     if len(model) == 0:
         e = NotFound("Model not found.")
