@@ -4,7 +4,7 @@ FROM python:3.9-slim-buster
 
 WORKDIR /app
 
-RUN pipx install poetry==1.2.2 && poetry config virtualenvs.create false
+RUN pip install "poetry==1.2.2" && poetry config virtualenvs.create false
 
 COPY poetry.lock pyproject.toml /app/
 
