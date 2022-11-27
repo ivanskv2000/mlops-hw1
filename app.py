@@ -28,6 +28,5 @@ def handle_http_exception(error):
 
 api.init_app(app)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
-
