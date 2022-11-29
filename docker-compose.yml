@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  server:
+    restart: always
+    build: ./server
+    volumes:
+      - ./server/:/app
+    ports:
+      - 8000:5000
+    depends_on:
+      - database
+  database:
+    restart: always
+    image: postgres:10
+    environment:
+      - POSTGRES_USER=${USER}
+      - POSTGRES_PASSWORD=${PASSWORD}
+      - POSTGRES_DB=${DB}
+    volumes:
+      - ./postgres-data/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./.env

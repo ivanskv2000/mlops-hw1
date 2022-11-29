@@ -19,6 +19,7 @@ pathlib = "^1.0.1"
 joblib = "^1.2.0"
 importlib-resources = "^5.10.0"
 poetry = "^1.2.2"
+psycopg2-binary = "^2.9.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
