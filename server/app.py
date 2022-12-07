@@ -5,6 +5,7 @@ import os
 import psycopg2
 
 
+'''
 conn = psycopg2.connect(
     host="database",
     port=5432,
@@ -23,6 +24,7 @@ cur.execute(
 )
 cur.close()
 conn.close()
+'''
 
 
 app = Flask(__name__)

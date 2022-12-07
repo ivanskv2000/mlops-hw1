@@ -6,6 +6,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from . import data_helpers
 from . import model_helpers
 import os
+from .db_models import session
 
 
 models_metadata = []
