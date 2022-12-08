@@ -26,6 +26,9 @@ class MlModel(Base):
     model = Column(LargeBinary, nullable=False)
     date_added = Column(DateTime, server_default=text("NOW()"))
 
+    def todict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 Base.metadata.bind = engine
 Base.metadata.create_all(engine)

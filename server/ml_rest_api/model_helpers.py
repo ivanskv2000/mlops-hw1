@@ -3,7 +3,9 @@ from sklearn.ensemble import RandomForestClassifier
 from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
 import os
 import json
-import joblib
+import pickle
+from .data_helpers import session, MlModel
+from sqlalchemy.exc import NoResultFound
 
 model_classes = {
     "classes": [
@@ -23,7 +25,7 @@ model_classes = {
 }
 
 
-def get_model_metadata(id, m):
+def get_model_metadata(m):
     """
     Return the saved models list in an appropriate format
     """
@@ -34,27 +36,12 @@ def get_model_metadata(id, m):
         return {k: v for k, v in hp.items() if k in allowed_hp}
 
     out = {
-        "id": id,
+        "model": pickle.dumps(m),
         "model_class": m.__class__.__name__,
         "hyperparameters": filter_hp(m.get_params()),
     }
 
     return out
-
-
-def parse_models(path_to_models):
-    metadata_files = [
-        os.path.join(path_to_models, file)
-        for file in os.listdir(path_to_models)
-        if file.endswith(".json")
-    ]
-    metadata_out = []
-    for metadata_file in metadata_files:
-        with open(metadata_file, "r") as cf:
-            md = json.load(cf)
-            metadata_out.append(md)
-
-    return metadata_out
 
 
 def model_errors_handler(func):
@@ -75,6 +62,33 @@ def model_errors_handler(func):
     return wrapper
 
 
+def database_errors_handler(func):
+    """
+    A decorator used for handling exceptions
+    which may occur during model training or prediction
+    """
+
+    def wrapper(*args, **kwargs):
+        try:
+            out = func(*args, **kwargs)
+            return out
+        except NoResultFound:
+            raise NotFound("Model not found.")
+        #except TypeError:
+        #    raise BadRequest("Unknown hyperparameter.")
+
+    return wrapper
+
+
+@database_errors_handler
+def parse_models():
+    db_entries = session.query().all()
+    metadata_out = [i.todict() for i in db_entries]
+
+    return metadata_out
+
+
+@database_errors_handler
 @model_errors_handler
 def train_model(model_class, X, y, **kwargs):
     """
@@ -88,73 +102,63 @@ def train_model(model_class, X, y, **kwargs):
         e = BadRequest("Unknown model class provided.")
         raise e
 
-    return mc.fit(X, y)
+    fitted_model = mc.fit(X, y)
+    metadata = get_model_metadata(fitted_model)
+
+    new_db_entry = MlModel(
+        model_class=metadata['model_class'],
+        hyperparameters=metadata['hyperparameters'],
+        model=metadata['model']
+        )
+
+    session.add(new_db_entry)
+    session.commit()
+
+    return {
+        "status": "trained",
+        "model_class": new_db_entry.model_class,
+        "id": new_db_entry.id
+        }
 
 
+@database_errors_handler
 @model_errors_handler
-def predict_with_model(model_id, path_to_models, X):
+def predict_with_model(model_id, X):
     """
     Return predictions
     """
-    model = [
-        os.path.join(path_to_models, file)
-        for file in os.listdir(path_to_models)
-        if file == f"{model_id}.joblib"
-    ]
-    if len(model) == 0:
-        e = NotFound("Model not found.")
-        raise e
-    else:
-        model = joblib.load(model[0])
-        prediction = model.predict(X)
+    db_entry = session.query(MlModel).filter(id=model_id).one()
+    model = pickle.loads(db_entry.model)
+    prediction = model.predict(X)
 
-        if model.__class__.__name__ == "RandomForestClassifier":
-            prediction = prediction.astype(str)
+    if model.__class__.__name__ == "RandomForestClassifier":
+        prediction = prediction.astype(str)
 
-        return list(prediction)
+    return list(prediction)
 
 
+@database_errors_handler
 @model_errors_handler
-def re_train(model_id, path_to_models, X, y):
+def re_train(model_id, X, y):
     """
     Re-train an existing model
     """
-    model = [
-        os.path.join(path_to_models, file)
-        for file in os.listdir(path_to_models)
-        if file == f"{model_id}.joblib"
-    ]
+    db_entry = session.query(MlModel).filter(id=model_id).one()
+    model = pickle.loads(db_entry.model)
 
-    if len(model) == 0:
-        e = NotFound("Model not found.")
-        raise e
-    else:
-        model = joblib.load(model[0])
-        return model.fit(X, y)
+    refitted_model = model.fit(X, y)
+    db_entry.model = pickle.dumps(refitted_model)
+    session.add(db_entry)
+    session.commit()
+
+    return {"status": "re-trained", "id": db_entry.id}
 
 
-def save_model(model_id, fitted_model, path_to_models):
-    model_metadata = get_model_metadata(model_id, fitted_model)
-
-    model_pickle_path = os.path.join(path_to_models, f"{model_id}.joblib")
-    model_metadata_path = os.path.join(path_to_models, f"{model_id}.json")
-
-    joblib.dump(fitted_model, model_pickle_path)
-
-    with open(model_metadata_path, "w") as outfile:
-        json.dump(model_metadata, outfile, indent=4)
-
-
-def delete_model(model_id, path_to_models):
-    model = [
-        os.path.join(path_to_models, file)
-        for file in os.listdir(path_to_models)
-        if file == f"{model_id}.joblib"
-    ]
-
-    if len(model) == 0:
-        e = NotFound("Model not found.")
-        raise e
-    else:
-        os.remove(model[0])
-        os.remove(os.path.join(path_to_models, f"{model_id}.json"))
+@database_errors_handler
+def delete_model(model_id):
+    """
+    Delete an existing model
+    """
+    db_entry = session.query(MlModel).filter(id=model_id).one()
+    session.delete(db_entry) 
+    session.commit()
