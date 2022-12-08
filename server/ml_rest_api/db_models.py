@@ -5,12 +5,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 
-# создание экземпляра declarative_base
 Base = declarative_base()
 
-# здесь добавим классы
-
-# создает экземпляр create_engine в конце файла
 engine = create_engine(
     f"postgresql+psycopg2://{os.environ['POSTGRES_USER']}:{os.environ['POSTGRES_PASSWORD']}@database:5432/{os.environ['POSTGRES_DB']}"
 )

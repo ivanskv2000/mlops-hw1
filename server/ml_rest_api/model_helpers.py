@@ -4,7 +4,7 @@ from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
 import os
 import json
 import pickle
-from .data_helpers import session, MlModel
+from . import db_models
 from sqlalchemy.exc import NoResultFound
 
 model_classes = {
@@ -82,8 +82,15 @@ def database_errors_handler(func):
 
 @database_errors_handler
 def parse_models():
-    db_entries = session.query().all()
+    def return_json_serializable(d: dict):
+        filtered_d = {key: value for key, value in d.items() if key != 'model'}
+        filtered_d['date_added'] = filtered_d['date_added'].strftime("%Y-%m-%d %H:%M:%S")
+
+        return filtered_d
+
+    db_entries = db_models.session.query(db_models.MlModel).all()
     metadata_out = [i.todict() for i in db_entries]
+    metadata_out = [return_json_serializable(i) for i in metadata_out]
 
     return metadata_out
 
@@ -105,14 +112,14 @@ def train_model(model_class, X, y, **kwargs):
     fitted_model = mc.fit(X, y)
     metadata = get_model_metadata(fitted_model)
 
-    new_db_entry = MlModel(
+    new_db_entry = db_models.MlModel(
         model_class=metadata["model_class"],
         hyperparameters=metadata["hyperparameters"],
         model=metadata["model"],
     )
 
-    session.add(new_db_entry)
-    session.commit()
+    db_models.session.add(new_db_entry)
+    db_models.session.commit()
 
     return {
         "status": "trained",
@@ -127,7 +134,7 @@ def predict_with_model(model_id, X):
     """
     Return predictions
     """
-    db_entry = session.query(MlModel).filter(id=model_id).one()
+    db_entry = db_models.session.query(db_models.MlModel).filter_by(id=model_id).one()
     model = pickle.loads(db_entry.model)
     prediction = model.predict(X)
 
@@ -143,13 +150,13 @@ def re_train(model_id, X, y):
     """
     Re-train an existing model
     """
-    db_entry = session.query(MlModel).filter(id=model_id).one()
+    db_entry = db_models.session.query(db_models.MlModel).filter_by(id=model_id).one()
     model = pickle.loads(db_entry.model)
 
     refitted_model = model.fit(X, y)
     db_entry.model = pickle.dumps(refitted_model)
-    session.add(db_entry)
-    session.commit()
+    db_models.session.add(db_entry)
+    db_models.session.commit()
 
     return {"status": "re-trained", "id": db_entry.id}
 
@@ -159,8 +166,8 @@ def delete_model(model_id):
     """
     Delete an existing model
     """
-    db_entry = session.query(MlModel).filter(id=model_id).one()
-    session.delete(db_entry)
-    session.commit()
+    db_entry = db_models.session.query(db_models.MlModel).filter_by(id=model_id).one()
+    db_models.session.delete(db_entry)
+    db_models.session.commit()
 
     return {"status": "deleted", "model_id": model_id}
