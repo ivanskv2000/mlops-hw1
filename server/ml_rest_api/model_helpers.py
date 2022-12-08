@@ -74,7 +74,7 @@ def database_errors_handler(func):
             return out
         except NoResultFound:
             raise NotFound("Model not found.")
-        #except TypeError:
+        # except TypeError:
         #    raise BadRequest("Unknown hyperparameter.")
 
     return wrapper
@@ -106,10 +106,10 @@ def train_model(model_class, X, y, **kwargs):
     metadata = get_model_metadata(fitted_model)
 
     new_db_entry = MlModel(
-        model_class=metadata['model_class'],
-        hyperparameters=metadata['hyperparameters'],
-        model=metadata['model']
-        )
+        model_class=metadata["model_class"],
+        hyperparameters=metadata["hyperparameters"],
+        model=metadata["model"],
+    )
 
     session.add(new_db_entry)
     session.commit()
@@ -117,8 +117,8 @@ def train_model(model_class, X, y, **kwargs):
     return {
         "status": "trained",
         "model_class": new_db_entry.model_class,
-        "id": new_db_entry.id
-        }
+        "id": new_db_entry.id,
+    }
 
 
 @database_errors_handler
@@ -160,5 +160,5 @@ def delete_model(model_id):
     Delete an existing model
     """
     db_entry = session.query(MlModel).filter(id=model_id).one()
-    session.delete(db_entry) 
+    session.delete(db_entry)
     session.commit()
