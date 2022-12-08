@@ -1,18 +1,8 @@
-import sys
 import os
-
-# для настройки баз данных
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, JSON, LargeBinary
+from sqlalchemy import Column, Integer, String, DateTime, JSON, LargeBinary
 from sqlalchemy.sql.expression import text
 from sqlalchemy.orm import sessionmaker
-
-# для определения таблицы и модели
 from sqlalchemy.ext.declarative import declarative_base
-
-# для создания отношений между таблицами
-from sqlalchemy.orm import relationship
-
-# для настроек
 from sqlalchemy import create_engine
 
 # создание экземпляра declarative_base
@@ -43,6 +33,6 @@ Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-modelTest = MlModel(model_class="Linreg", hyperparameters={"1": 1}, model=b"c")
-session.add(modelTest)
-session.commit()
+# modelTest = MlModel(model_class="Linreg", hyperparameters={"1": 1}, model=b"c")
+# session.add(modelTest)
+# session.commit()

@@ -5,28 +5,6 @@ import os
 import psycopg2
 
 
-"""
-conn = psycopg2.connect(
-    host="database",
-    port=5432,
-    database=os.environ["POSTGRES_DB"],
-    user=os.environ["POSTGRES_USER"],
-    password=os.environ["POSTGRES_PASSWORD"],
-)
-
-cur = conn.cursor()
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS saved_models (id serial PRIMARY KEY,"
-    "class varchar (50) NOT NULL,"
-    "author varchar (50) NOT NULL,"
-    "model bytea NOT NULL,"
-    "date_added date DEFAULT CURRENT_TIMESTAMP);"
-)
-cur.close()
-conn.close()
-"""
-
-
 app = Flask(__name__)
 app.config["ERROR_404_HELP"] = False
 app.config["PROPAGATE_EXCEPTIONS"] = False
