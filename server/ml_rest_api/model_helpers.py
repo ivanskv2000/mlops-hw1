@@ -83,8 +83,10 @@ def database_errors_handler(func):
 @database_errors_handler
 def parse_models():
     def return_json_serializable(d: dict):
-        filtered_d = {key: value for key, value in d.items() if key != 'model'}
-        filtered_d['date_added'] = filtered_d['date_added'].strftime("%Y-%m-%d %H:%M:%S")
+        filtered_d = {key: value for key, value in d.items() if key != "model"}
+        filtered_d["date_added"] = filtered_d["date_added"].strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
 
         return filtered_d
 
