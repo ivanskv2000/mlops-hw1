@@ -162,3 +162,5 @@ def delete_model(model_id):
     db_entry = session.query(MlModel).filter(id=model_id).one()
     session.delete(db_entry)
     session.commit()
+
+    return {"status": "deleted", "model_id": model_id}

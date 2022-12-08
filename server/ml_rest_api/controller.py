@@ -154,7 +154,7 @@ class PredictWithExisting(Resource):
             X = data_helpers.prepare_X(request.get_json()["X"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
-        prediction = model_helpers.predict_with_model(model_id, models_path, X)
+        prediction = model_helpers.predict_with_model(model_id, X)
         return {"y_pred": prediction}
 
 
@@ -167,5 +167,4 @@ class DeleteModel(Resource):
         """
         Удалить обученную модель из памяти
         """
-        model_helpers.delete_model(model_id, models_path)
-        return {"status": "deleted", "model_id": model_id}
+        return model_helpers.delete_model(model_id)
