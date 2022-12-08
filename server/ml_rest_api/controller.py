@@ -168,4 +168,3 @@ class DeleteModel(Resource):
         Удалить обученную модель из памяти
         """
         return model_helpers.delete_model(model_id)
-

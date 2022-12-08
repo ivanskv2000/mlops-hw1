@@ -36,6 +36,3 @@ Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-# modelTest = MlModel(model_class="Linreg", hyperparameters={"1": 1}, model=b"c")
-# session.add(modelTest)
-# session.commit()
