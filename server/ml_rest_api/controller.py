@@ -108,12 +108,7 @@ class TrainModel(Resource):
         except KeyError:
             raise BadRequest("Insufficient data provided.")
 
-        fitted_model = model_helpers.train_model(model_class, X, y, **hyperparameters)
-
-        model_id = next(id_generator)
-
-        model_helpers.save_model(model_id, fitted_model, models_path)
-        return {"status": "trained", "model_class": model_class, "id": model_id}
+        return model_helpers.train_model(model_class, X, y, **hyperparameters)
 
 
 @api.route("/retrain/<int:model_id>")
@@ -126,17 +121,13 @@ class ReTrainModel(Resource):
         """
         Обучить сохраненную модель заново
         """
-
         try:
             X = data_helpers.prepare_X(request.get_json()["X"])
             y = data_helpers.prepare_y(request.get_json()["y"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
 
-        new_model = model_helpers.re_train(model_id, models_path, X, y)
-        model_helpers.save_model(model_id, new_model, models_path)
-
-        return {"status": "re-trained", "id": model_id}
+        return model_helpers.re_train(model_id, X, y)
 
 
 @api.route("/saved_models")
@@ -145,7 +136,7 @@ class GetSavedModels(Resource):
         """
         Вывести список имеющихся в памяти моделей
         """
-        return {"models": model_helpers.parse_models(models_path)}
+        return {"models": model_helpers.parse_models()}
 
 
 @api.route("/predict/<int:model_id>")
@@ -162,7 +153,7 @@ class PredictWithExisting(Resource):
             X = data_helpers.prepare_X(request.get_json()["X"])
         except KeyError:
             raise BadRequest("Insufficient data provided.")
-        prediction = model_helpers.predict_with_model(model_id, models_path, X)
+        prediction = model_helpers.predict_with_model(model_id, X)
         return {"y_pred": prediction}
 
 
@@ -175,5 +166,4 @@ class DeleteModel(Resource):
         """
         Удалить обученную модель из памяти
         """
-        model_helpers.delete_model(model_id, models_path)
-        return {"status": "deleted", "model_id": model_id}
+        return model_helpers.delete_model(model_id)

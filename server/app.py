@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request
 from ml_rest_api import api
 from werkzeug.exceptions import HTTPException
+import os
+import psycopg2
 
 
 app = Flask(__name__)
@@ -27,4 +29,6 @@ def handle_http_exception(error):
 
 
 api.init_app(app)
-app.run(debug=True)
+
+if __name__ == "__main__":
+    app.run(debug=True)
