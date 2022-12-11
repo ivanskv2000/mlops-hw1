@@ -1,3 +1,4 @@
 
-ml_rest_api/server/__pycache__/
+server/__pycache__/
 postgres-data/
+postgres-data/postgres/
