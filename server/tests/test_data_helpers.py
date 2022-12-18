@@ -12,7 +12,7 @@ wine_data = skld.load_wine(as_frame=True)
 
 
 def pandas_to_json(df):
-    return json.loads(df.to_json(orient='split', index=False))
+    return json.loads(df.to_json(orient="split", index=False))
 
 
 def json_to_pandas(js):
@@ -29,45 +29,27 @@ def list_equality(l1, l2):
 
 class TestXPreparation:
     def test_breast_cancer(self):
-        dh_result = data_helpers.prepare_X(
-            pandas_to_json(
-                breast_cancer_data['data']
-                )
-            )
-        assert df_equality(dh_result, breast_cancer_data['data'])
+        dh_result = data_helpers.prepare_X(pandas_to_json(breast_cancer_data["data"]))
+        assert df_equality(dh_result, breast_cancer_data["data"])
 
     def test_iris(self):
-        dh_result = data_helpers.prepare_X(
-            pandas_to_json(
-                iris_data['data']
-                )
-            )
-        assert df_equality(dh_result, iris_data['data'])
+        dh_result = data_helpers.prepare_X(pandas_to_json(iris_data["data"]))
+        assert df_equality(dh_result, iris_data["data"])
 
     def test_wine(self):
-        dh_result = data_helpers.prepare_X(
-            pandas_to_json(
-                wine_data['data']
-                )
-            )
-        assert df_equality(dh_result, wine_data['data'])
+        dh_result = data_helpers.prepare_X(pandas_to_json(wine_data["data"]))
+        assert df_equality(dh_result, wine_data["data"])
 
 
 class TestYPreparation:
     def test_breast_cancer(self):
-        dh_result = data_helpers.prepare_y(
-            breast_cancer_data['target'].tolist()
-            )
-        assert list_equality(dh_result, breast_cancer_data['target'].tolist())
+        dh_result = data_helpers.prepare_y(breast_cancer_data["target"].tolist())
+        assert list_equality(dh_result, breast_cancer_data["target"].tolist())
 
     def test_iris(self):
-        dh_result = data_helpers.prepare_y(
-            iris_data['target'].tolist()
-            )
-        assert list_equality(dh_result, iris_data['target'].tolist())
+        dh_result = data_helpers.prepare_y(iris_data["target"].tolist())
+        assert list_equality(dh_result, iris_data["target"].tolist())
 
     def test_wine(self):
-        dh_result = data_helpers.prepare_y(
-            wine_data['target'].tolist()
-            )
-        assert list_equality(dh_result, wine_data['target'].tolist())
+        dh_result = data_helpers.prepare_y(wine_data["target"].tolist())
+        assert list_equality(dh_result, wine_data["target"].tolist())

@@ -1,5 +1,6 @@
 from flask_restx import Api
-#from .controller import api as ns
+
+# from .controller import api as ns
 
 api = Api(
     title="ML Models Api",
@@ -9,4 +10,4 @@ api = Api(
     doc="/ml_rest_api/doc",
 )
 
-#api.add_namespace(ns)
+# api.add_namespace(ns)
