@@ -5,7 +5,7 @@ services:
     container_name: server
     restart: always
     build: ./server
-    #image: ivanskv2000/mlops-server
+    image: ivanskv2000/mlops-server
     volumes:
       - ./server/:/app
     ports:
