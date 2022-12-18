@@ -104,3 +104,12 @@ ___
 ```bash
 curl -X DELETE http://127.0.0.1:8000/ml_rest_api/delete/1
 ```
+
+## Testing
+
+To `pytest` the api, run 
+
+```bash
+cd server/
+poetry run python -m pytest
+```

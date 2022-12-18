@@ -1,4 +1,5 @@
 
 server/__pycache__/
+server/tests/__pycache__/
 postgres-data/*
 postgres-data/postgres/

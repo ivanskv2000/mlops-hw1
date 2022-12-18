@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request
-from ml_rest_api import api
+from ml_rest_api import api, controller
 from werkzeug.exceptions import HTTPException
 import os
 import psycopg2
 
+api.add_namespace(controller.api)
 
 app = Flask(__name__)
 app.config["ERROR_404_HELP"] = False
