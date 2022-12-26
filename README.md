@@ -113,3 +113,7 @@ To `pytest` the api, run
 cd server/
 poetry run python -m pytest
 ```
+
+## Improvements
+
+(!) https://stackoverflow.com/questions/57193597/mocking-a-sqlalchemy-session-for-pytest
